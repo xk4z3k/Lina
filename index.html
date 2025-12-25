@@ -6,9 +6,7 @@
   <title>Lina</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -26,20 +24,9 @@
       overflow-y: auto;
     }
 
-    .msg {
-      margin-bottom: 12px;
-      line-height: 1.4;
-    }
-
-    .user {
-      text-align: right;
-      color: #7dd3fc;
-    }
-
-    .lina {
-      text-align: left;
-      color: #fca5a5;
-    }
+    .msg { margin-bottom: 12px; line-height: 1.4; }
+    .user { text-align: right; color: #7dd3fc; }
+    .lina { text-align: left; color: #fca5a5; }
 
     #inputBar {
       display: flex;
@@ -68,11 +55,10 @@
 </head>
 
 <body>
-
   <div id="chat"></div>
 
   <div id="inputBar">
-    <input id="input" placeholder="Schreib, Stern…" autocomplete="off"/>
+    <input id="input" placeholder="Schreib, Stern…" autocomplete="off" />
     <button onclick="send()">➤</button>
   </div>
 
@@ -103,9 +89,9 @@
         });
 
         const data = await res.json();
-        addMessage("Lina: " + data.reply, "lina");
-      } catch {
-        addMessage("Lina: Irgendwas hakt grad. Nochmal senden.", "lina");
+        addMessage("Lina: " + (data.reply ?? JSON.stringify(data)), "lina");
+      } catch (e) {
+        addMessage("Lina: Netzwerkfehler", "lina");
       }
     }
 
@@ -113,7 +99,5 @@
       if (e.key === "Enter") send();
     });
   </script>
-
 </body>
 </html>
-
