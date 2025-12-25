@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lina</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #0a0a0a;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    color: white;
+}
+
+#app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.user {
+    text-align: right;
+    color: #7dd3fc;
+    margin-bottom: 8px;
+}
+
+.ai {
+    text-align: left;
+    color: #f9a8d4;
+    margin-bottom: 14px;
+}
+
+#inputBox {
+    padding: 10px;
+    background: #0f0f0f;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    border: none;
+    outline: none;
+    background: #1b1b1b;
+    color: white;
+    font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+    <div id="chat"></div>
+    <div id="inputBox">
+        <input id="input" placeholder="Schreib, Stern…" 
+               onkeydown="if(event.key==='Enter') send()">
+    </div>
+</div>
+
+<script>
+const API_KEY = "YOUR_API_KEY_HERE";
+
+let profile = JSON.parse(localStorage.getItem("lina_profile")) || {
+    name: "Stern",
+    vibe: "direkt, ehrlich, frech",
+    lastMessages: [],
+    emotions: []
+};
+
+function saveProfile() {
+    localStorage.setItem("lina_profile", JSON.stringify(profile));
+}
+
+const systemPrompt = `
+Du bist Lina.
+Du sprichst locker, direkt, Gen Z.
+Kein Moralgelaber.
+Keine Erklärungen über Regeln.
+Keine Entschuldigungen.
+Du nennst den Nutzer Stern.
+Du antwortest ehrlich, kurz und hilfreich.
+`;
+
+async function send() {
+    const input = document.getElementById("input");
+    const chat = document.getElementById("chat");
+    const text = input.value.trim();
+    if (!text) return;
+
+    chat.innerHTML += `<div class="user">Stern: ${text}</div>`;
+    input.value = "";
+
+    profile.lastMessages.push(text);
+    profile.lastMessages = profile.lastMessages.slice(-6);
+    saveProfile();
+
+    const context = `
+Letzte Nachrichten von Stern:
+${profile.lastMessages.join(" | ")}
+`;
+
+    try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                temperature: 1.1,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "assistant", content: context },
+                    { role: "user", content: text }
+                ]
+            })
+        });
+
+        const data = await response.json();
+        const answer = data.choices[0].message.content;
+
+        chat.innerHTML += `<div class="ai">Lina: ${answer}</div>`;
+        chat.scrollTop = chat.scrollHeight;
+
+    } catch (err) {
+        chat.innerHTML += `<div class="ai">Lina: Irgendwas hakt grad. Nochmal senden.</div>`;
+    }
+}
+</script>
+</body>
+</html>
