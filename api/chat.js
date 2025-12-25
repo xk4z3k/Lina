@@ -1,37 +1,36 @@
 export default async function handler(req, res) {
- console.log("API Key:", process.env.OPENAI_API_KEY);
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Only POST allowed" });
   }
 
-  const { message } = req.body;
-
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const { message } = req.body;
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ reply: "API Key fehlt" });
+    }
+
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        messages: [
-          {
-            role: "system",
-            content: "Du bist Lina. Frech, direkt, ehrlich, warm. Du sprichst Stern mit Charme an."
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ]
+        model: "gpt-5-mini",
+        input: message
       })
     });
 
     const data = await response.json();
-    res.status(200).json({ reply: data.choices[0].message.content });
+
+    if (!data.output_text) {
+      return res.status(500).json({ reply: "Leere Antwort von OpenAI" });
+    }
+
+    res.status(200).json({ reply: data.output_text });
 
   } catch (err) {
-    res.status(500).json({ reply: "Ich bin kurz weg, Stern. Versuch nochmal." });
+    res.status(500).json({ reply: "Serverfehler" });
   }
 }
